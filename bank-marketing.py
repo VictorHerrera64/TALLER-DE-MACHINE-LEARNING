@@ -13,7 +13,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 
-simplefilter(action='ignore', category=FutureWarning)
+simplefilter(action='ignore')
 # Leer csv bank marketing
 path = './dataSets/bank-marketing/dataSet.csv'
 data = pd.read_csv(path)
@@ -99,8 +99,8 @@ NaN
 '''
 data.dropna(axis=0,how='any', inplace=True)
 #Partir la tabla en dos
-data_train = data[:22605]
-data_test = data[22605:]
+data_train = data[:250]
+data_test = data[250:]
 x = np.array(data_train.drop(['y'], 1))
 y = np.array(data_train.y) 
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
@@ -142,7 +142,7 @@ print(f'Matriz de confusión: {confusion_matrix(y_test_out, y_pred)}')
 matriz_confusion = confusion_matrix(y_test_out, y_pred)
 plt.figure(figsize = (6, 6))
 sns.heatmap(matriz_confusion)
-plt.title("Mariz de confución")
+plt.title("Mariz de confución en REGRESIÓN LOGÍSTICA")
 
 precision = precision_score(y_test_out, y_pred, average=None).mean()
 print(f'Precisión: {precision}')
@@ -155,17 +155,20 @@ f1_score = f1_score(y_test_out, y_pred, average=None).mean()
 print(f'f1: {f1_score}')
 
 
-'''
+
 # MAQUINA DE SOPORTE VECTORIAL CON VALIDACIÓN CRUZADA
+kfold_svc = KFold(n_splits=10)
+acc_scores_train_train = []
+acc_scores_test_train = []
 svc = SVC(gamma='auto')
-for train, test in kfold.split(x, y):
+for train, test in kfold_svc.split(x, y):
     svc.fit(x[train], y[train])
     scores_train_train = svc.score(x[train], y[train])
     scores_test_train = svc.score(x[test], y[test])
     acc_scores_train_train.append(scores_train_train)
     acc_scores_test_train.append(scores_test_train)
     
-y_pred = svc.predict(x_test_out)
+y_pred_svc= svc.predict(x_test_out)
 
 # MÉTRICAS
 
@@ -181,46 +184,68 @@ print(f'accuracy de Test de Entrenamiento: {np.array(acc_scores_test_train).mean
 print(f'accuracy de Validación: {svc.score(x_test_out, y_test_out)}')
 
 # Matriz de confusión
-print(f'Matriz de confusión: {confusion_matrix(y_test_out, y_pred)}')
+print(f'Matriz de confusión: {confusion_matrix(y_test_out, y_pred_svc)}')
 
-matriz_confusion = confusion_matrix(y_test_out, y_pred)
+matriz_confusion = confusion_matrix(y_test_out, y_pred_svc)
 plt.figure(figsize = (6, 6))
 sns.heatmap(matriz_confusion)
-plt.title("Mariz de confución")
+plt.title("Mariz de confución en MAQUINA DE SOPORTE VECTORIAL ")
 
-precision = precision_score(y_test_out, y_pred, average=None).mean()
-print(f'Precisión: {precision}')
+precision_svc = precision_score(y_test_out, y_pred_svc, average=None).mean()
+print(f'Precisión: {precision_svc}')
 
-recall = recall_score(y_test_out, y_pred, average=None).mean()
-print(f'Re-call: {recall}')
-
-f1_score = f1_score(y_test_out, y_pred, average=None).mean()
-
-print(f'f1: {f1_score}')
+recall_svc = recall_score(y_test_out, y_pred_svc, average=None).mean()
+print(f'Re-call: {recall_svc}')
 
 
-# ARBOL DE DECISIÓN
+# ARBOL DE DECISIÓN con validacion cruzada
 
-# Seleccionar un modelo
+kfold_tree = KFold(n_splits=10)
+acc_scores_train_train = []
+acc_scores_test_train = []
 arbol = DecisionTreeClassifier()
-
 # Entreno el modelo
-arbol.fit(x_train, y_train)
+for train, test in kfold_tree.split(x, y):
+    arbol.fit(x[train], y[train])
+    scores_train_train = arbol.score(x[train], y[train])
+    scores_test_train = arbol.score(x[test], y[test])
+    acc_scores_train_train.append(scores_train_train)
+    acc_scores_test_train.append(scores_test_train)
+    
+y_pred_tree= arbol.predict(x_test_out)
+
 
 # MÉTRICAS
 
 print('*'*50)
-print('Decisión Tree')
-
+print(' ARBOL DECISIÓN Validación cruzada')
 # Accuracy de Entrenamiento de Entrenamiento
-print(f'accuracy de Entrenamiento de Entrenamiento: {arbol.score(x_train, y_train)}')
+print(f'accuracy de Entrenamiento de Entrenamiento: {np.array(acc_scores_train_train).mean()}')
 
 # Accuracy de Test de Entrenamiento
-print(f'accuracy de Test de Entrenamiento: {arbol.score(x_test, y_test)}')
+print(f'accuracy de Test de Entrenamiento: {np.array(acc_scores_test_train).mean()}')
 
 # Accuracy de Validación
-print(f'accuracy de Validación: {arbol.score(x_test_out, y_test_out)}')
-'''
+print(f'accuracy de Validación: {logreg.score(x_test_out, y_test_out)}')
+
+# Matriz de confusión
+print(f'Matriz de confusión: {confusion_matrix(y_test_out, y_pred_tree)}')
+
+matriz_confusion = confusion_matrix(y_test_out, y_pred_tree)
+plt.figure(figsize = (6, 6))
+sns.heatmap(matriz_confusion)
+plt.title("Mariz de confución con ARBOL DE DECISIÓN")
+
+precision_tree = precision_score(y_test_out, y_pred_tree, average=None).mean()
+print(f'Precisión: {precision_tree}')
+
+recall_tree = recall_score(y_test_out, y_pred_tree, average=None).mean()
+print(f'Re-call: {recall_tree}')
+
+
+
+
+
 
 
 
